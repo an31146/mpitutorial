@@ -12,7 +12,7 @@
 #include <stdlib.h>
 
 int main(int argc, char** argv) {
-  const int PING_PONG_LIMIT = 10;
+  const int PING_PONG_LIMIT = 1000;
 
   // Initialize the MPI environment
   MPI_Init(NULL, NULL);
@@ -23,26 +23,25 @@ int main(int argc, char** argv) {
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
   // We are assuming at least 2 processes for this task
-  if (world_size != 2) {
-    fprintf(stderr, "World size must be two for %s\n", argv[0]);
+  if (world_size < 2) {
+    fprintf(stderr, "World size must be at least two for %s\n", argv[0]);
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
 
   int ping_pong_count = 0;
-  int partner_rank = (world_rank + 1) % 2;
+  int partner_rank = (world_rank + 1) % world_size;
   while (ping_pong_count < PING_PONG_LIMIT) {
-    if (world_rank == ping_pong_count % 2) {
+    //printf("\e[s");
+    if (world_rank % 2 == 0) {
       // Increment the ping pong count before you send it
       ping_pong_count++;
       MPI_Send(&ping_pong_count, 1, MPI_INT, partner_rank, 0, MPI_COMM_WORLD);
-      printf("%d sent and incremented ping_pong_count %d to %d\n",
-             world_rank, ping_pong_count, partner_rank);
+      printf("Process[%2d]: Tx ping_pong_count==%04d\t  TO: Process[%2d]\n", world_rank, ping_pong_count, partner_rank);
     } else {
-      MPI_Recv(&ping_pong_count, 1, MPI_INT, partner_rank, 0, MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
-      printf("%d received ping_pong_count %d from %d\n",
-             world_rank, ping_pong_count, partner_rank);
+      MPI_Recv(&ping_pong_count, 1, MPI_INT, world_rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      printf("Process[%2d]: Rx ping_pong_count==%04d\tFROM: Process[%2d]\n", world_rank, ping_pong_count, partner_rank);
     }
+    //printf("\e[u");
   }
   MPI_Finalize();
 }

@@ -14,8 +14,8 @@
 
 // Creates an array of random numbers for binning. Note that the numbers are
 // between [0, 1)
-float *create_random_numbers(int numbers_per_proc) {
-  float *random_numbers = (float *)malloc(sizeof(float) * numbers_per_proc);
+double *create_random_numbers(int numbers_per_proc) {
+  double *random_numbers = (double *)malloc(sizeof(double) * numbers_per_proc);
   int i;
   for (i = 0; i < numbers_per_proc; i++) {
     int r = rand();
@@ -23,7 +23,7 @@ float *create_random_numbers(int numbers_per_proc) {
     if (r == RAND_MAX) {
       r--;
     }
-    random_numbers[i] = rand() / (float)(RAND_MAX);
+    random_numbers[i] = rand() / (double)(RAND_MAX);
   }
   return random_numbers;
 }
@@ -31,23 +31,23 @@ float *create_random_numbers(int numbers_per_proc) {
 // Given a number, determine which process owns it. Since numbers are from [0, 1),
 // simply multiple the number by the size of the MPI world to figure out which
 // process owns it
-int which_process_owns_this_number(float rand_num, int world_size) {
+int which_process_owns_this_number(double rand_num, int world_size) {
   return (int)(rand_num * world_size);
 }
 
 // Gets the starting value for a process's bin
-float get_bin_start(int world_rank, int world_size) {
-  return (float)world_rank / world_size;
+double get_bin_start(int world_rank, int world_size) {
+  return (double)world_rank / world_size;
 }
 
 // Gets the ending value for a process's bin
-float get_bin_end(int world_rank, int world_size) {
+double get_bin_end(int world_rank, int world_size) {
   return get_bin_start(world_rank + 1, world_size);
 }
 
 // This function returns the amount of numbers that will be sent to each
 // process given the array of random numbers.
-int *get_send_amounts_per_proc(float *rand_nums, int numbers_per_proc,
+int *get_send_amounts_per_proc(double *rand_nums, int numbers_per_proc,
                                int world_size) {
   int *send_amounts_per_proc = (int *)malloc(sizeof(int) * world_size);
   // Initialize the amount of numbers per process to zero
@@ -103,10 +103,10 @@ int sum(int *arr, int size) {
 }
 
 // Used for sorting floating point numbers
-int compare_float(const void *a, const void *b) {
-  if (*(float *)a < *(float *)b) {
+int compare_double(const void *a, const void *b) {
+  if (*(double *)a < *(double *)b) {
     return -1;
-  } else if (*(float *)a > *(float *)b) {
+  } else if (*(double *)a > *(double *)b) {
     return 1;
   } else {
     return 0;
@@ -114,11 +114,11 @@ int compare_float(const void *a, const void *b) {
 }
 
 // Verifies that the binned numbers belong to the process.
-void verify_bin_nums(float *binned_nums, int num_count, int world_rank,
+void verify_bin_nums(double *binned_nums, int num_count, int world_rank,
                      int world_size) {
   int i;
-  float bin_start = get_bin_start(world_rank, world_size);
-  float bin_end = get_bin_end(world_rank, world_size);
+  double bin_start = get_bin_start(world_rank, world_size);
+  double bin_end = get_bin_end(world_rank, world_size);
   for (i = 0; i < num_count; i++) {
     if (binned_nums[i] >= bin_end || binned_nums[i] < bin_start) {
       fprintf(stderr, "Error: Binned number %f exceeds bin range [%f - %f) for process %d\n",
@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
 
   // Create the random numbers on this process. Note that all numbers
   // will be between 0 and 1
-  float *rand_nums = create_random_numbers(numbers_per_proc);
+  double *rand_nums = create_random_numbers(numbers_per_proc);
 
   // Given the array of random numbers, determine how many will be sent
   // to each process (based on the which process owns the number).
@@ -173,20 +173,20 @@ int main(int argc, char** argv) {
   // Allocate an array to hold the binned numbers for this process based on the total
   // amount of numbers this process will receive from others.
   int total_recv_amount = sum(recv_amounts_per_proc, world_size);
-  float *binned_nums = (float *)malloc(sizeof(float) * total_recv_amount);
+  double *binned_nums = (double *)malloc(sizeof(double) * total_recv_amount);
 
   // The final step before binning - arrange all of the random numbers so that they
   // are ordered by bin. For simplicity, we are simply going to sort the random
   // numbers, however, this could be optimized since the numbers don't need to be
   // fully sorted.
-  qsort(rand_nums, numbers_per_proc, sizeof(float), &compare_float);
+  qsort(rand_nums, numbers_per_proc, sizeof(double), &compare_double);
 
   // Perform the binning step with MPI_Alltoallv. This will send all of the numbers in
   // the rand_nums array to their proper bin. Each process will only contain numbers
   // belonging to its bin after this step. For example, if there are 4 processes, process
   // 0 will contain numbers in the [0, .25) range.
-  MPI_Alltoallv(rand_nums, send_amounts_per_proc, send_offsets_per_proc, MPI_FLOAT,
-                binned_nums, recv_amounts_per_proc, recv_offsets_per_proc, MPI_FLOAT,
+  MPI_Alltoallv(rand_nums, send_amounts_per_proc, send_offsets_per_proc, MPI_DOUBLE,
+                binned_nums, recv_amounts_per_proc, recv_offsets_per_proc, MPI_DOUBLE,
                 MPI_COMM_WORLD);
 
   // Print results
@@ -206,6 +206,6 @@ int main(int argc, char** argv) {
   free(send_offsets_per_proc);
   free(recv_offsets_per_proc);
   free(binned_nums);
-
+  
   return 0;
 }

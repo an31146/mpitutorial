@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     number_amount = (rand() / (float)RAND_MAX) * MAX_NUMBERS;
     // Send the amount of integers to process one
     MPI_Send(numbers, number_amount, MPI_INT, 1, 0, MPI_COMM_WORLD);
-    printf("0 sent %d numbers to 1\n", number_amount);
+    printf("Process[0] sent %d numbers to Process[1]\n", number_amount);
   } else if (world_rank == 1) {
     MPI_Status status;
     // Probe for an incoming message from process zero
@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
     // Now receive the message with the allocated buffer
     MPI_Recv(number_buf, number_amount, MPI_INT, 0, 0, MPI_COMM_WORLD,
              MPI_STATUS_IGNORE);
-    printf("1 dynamically received %d numbers from 0.\n",
+    printf("Process[1] dynamically received %d numbers from Process[0].\n",
            number_amount);
     free(number_buf);
   }

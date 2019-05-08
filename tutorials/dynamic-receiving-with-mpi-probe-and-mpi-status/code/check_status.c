@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     number_amount = (rand() / (float)RAND_MAX) * MAX_NUMBERS;
     // Send the amount of integers to process one
     MPI_Send(numbers, number_amount, MPI_INT, 1, 0, MPI_COMM_WORLD);
-    printf("0 sent %d numbers to 1\n", number_amount);
+    printf("Process[0] sent %d numbers to Process[1]\n", number_amount);
   } else if (world_rank == 1) {
     MPI_Status status;
     // Receive at most MAX_NUMBERS from process zero
@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
     MPI_Get_count(&status, MPI_INT, &number_amount);
     // Print off the amount of numbers, and also print additional information
     // in the status object
-    printf("1 received %d numbers from 0. Message source = %d, tag = %d\n",
+    printf("Process[1] received %d numbers from Process[0]. Message source = %d, tag = %d\n",
            number_amount, status.MPI_SOURCE, status.MPI_TAG);
   }
   MPI_Barrier(MPI_COMM_WORLD);

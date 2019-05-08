@@ -31,7 +31,7 @@ void *gather_numbers_to_root(void *number, MPI_Datatype datatype, MPI_Comm comm)
   // Allocate an array on the root process of a size depending on the MPI datatype being used.
   int datatype_size;
   MPI_Type_size(datatype, &datatype_size);
-  void *gathered_numbers;
+  void *gathered_numbers = NULL;
   if (comm_rank == 0) {
     gathered_numbers = malloc(datatype_size * comm_size);
   }
@@ -134,4 +134,5 @@ int TMPI_Rank(void *send_data, void *recv_data, MPI_Datatype datatype, MPI_Comm 
     free(gathered_numbers);
     free(ranks);
   }
+  return 0;
 }

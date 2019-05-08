@@ -8,6 +8,7 @@
 // MPI_Probe.
 //
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <cstdlib>
 #include <time.h>
@@ -128,7 +129,7 @@ int main(int argc, char** argv) {
   initialize_walkers(num_walkers_per_proc, max_walk_size, subdomain_start,
                      subdomain_size, &incoming_walkers);
 
-  cout << "Process " << world_rank << " initiated " << num_walkers_per_proc
+  cout << "Process " << setw(2) << world_rank << " initiated " << num_walkers_per_proc
        << " walkers in subdomain " << subdomain_start << " - "
        << subdomain_start + subdomain_size - 1 << endl;
 
@@ -137,11 +138,11 @@ int main(int argc, char** argv) {
   int maximum_sends_recvs = max_walk_size / (domain_size / world_size) + 1;
   for (int m = 0; m < maximum_sends_recvs; m++) {
     // Process all incoming walkers
-    for (int i = 0; i < incoming_walkers.size(); i++) {
+    for (unsigned int i = 0; i < incoming_walkers.size(); i++) {
        walk(&incoming_walkers[i], subdomain_start, subdomain_size,
             domain_size, &outgoing_walkers);
     }
-    cout << "Process " << world_rank << " sending " << outgoing_walkers.size()
+    cout << "Process " << setw(2) << world_rank << " sending  " << outgoing_walkers.size()
          << " outgoing walkers to process " << (world_rank + 1) % world_size
          << endl;
     if (world_rank % 2 == 0) {
@@ -159,7 +160,7 @@ int main(int argc, char** argv) {
       send_outgoing_walkers(&outgoing_walkers, world_rank,
                             world_size);
     }
-    cout << "Process " << world_rank << " received " << incoming_walkers.size()
+    cout << "Process " << setw(2) << world_rank << " received " << incoming_walkers.size()
          << " incoming walkers" << endl;
   }
   cout << "Process " << world_rank << " done" << endl;
